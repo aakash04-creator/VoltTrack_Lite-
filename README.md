@@ -14,6 +14,14 @@ A local, demo-ready college major project for manually entered monthly electrici
 
 React + Vite, React Router, Axios, Recharts, Express, SQLite (`better-sqlite3`), JWT, bcrypt, Multer, csv-parse, Jest.
 
+## Project structure
+
+```text
+frontend/       React + Vite application
+backend/server/ Express API, database, risk engine, and tests
+scripts/        Local development helpers
+```
+
 ## Architecture
 
 ```mermaid
@@ -48,7 +56,7 @@ Requires Node.js 18 or newer.
 4. Run `npm run dev` and open [http://localhost:5173](http://localhost:5173).
 5. Log in as `admin@volttrack.com` / `admin123` (or `demo@volttrack.com` / `demo123`).
 
-SQLite is stored at `server/db/volttrack.sqlite` by default. Set `DB_PATH` to move it. The standalone API defaults to port 3000. The combined `npm run dev` launcher uses port 5000 when available and falls back to 5001 when it is occupied, then connects the Vite client to the selected API port. `npm test` runs the risk engine tests.
+SQLite is stored at `backend/server/db/volttrack.sqlite` by default. Set `DB_PATH` to move it. The standalone API defaults to port 3000. The combined `npm run dev` launcher uses port 5000 when available and falls back to 5001 when it is occupied, then connects the Vite client to the selected API port. `npm test` runs the risk engine tests.
 
 ## Risk scoring
 
