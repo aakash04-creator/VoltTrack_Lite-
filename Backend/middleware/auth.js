@@ -1,0 +1,2 @@
+const jwt=require('jsonwebtoken');
+module.exports=(req,res,next)=>{const token=(req.headers.authorization||'').replace(/^Bearer /,'');try{if(!token)throw new Error();req.user=jwt.verify(token,process.env.JWT_SECRET||'volttrack-demo-secret');next()}catch{res.status(401).json({error:'Please log in to continue'})}};
