@@ -1,4 +1,6 @@
-node_modules/
+node_modules
 .env
-npm-debug.log*
+server/db/*.sqlite*
+client/dist
 .DS_Store
+coverage
