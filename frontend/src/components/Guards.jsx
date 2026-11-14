@@ -1,0 +1,3 @@
+import {Navigate,useLocation} from 'react-router-dom';import useAuth from '../context/useAuth';import Spinner from './Spinner';
+export function ProtectedRoute({children}){const{user,token}=useAuth(),location=useLocation();if(token&&!user)return <Spinner label="Checking your session…"/>;return user?<>{children}</>:<Navigate to="/login" replace state={{from:location}}/>}
+export function AdminRoute({children}){const{user,token}=useAuth();if(token&&!user)return <Spinner label="Checking your session…"/>;return !user?<Navigate to="/login" replace/>:user.role==='ADMIN'?children:<Navigate to="/dashboard" replace/>}
