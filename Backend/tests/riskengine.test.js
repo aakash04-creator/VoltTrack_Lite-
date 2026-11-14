@@ -1,4 +1,4 @@
-const {analyzeMeters}=require('../services/riskEngine');
+const {analyzeMeters}=require('../services/riskengine');
 const meter={id:1,meter_id:'A',consumer_name:'A',connection_type:'Residential',sanctioned_load_kw:5,status:'Active'};
 const run=(values,extra=[],m=meter)=>analyzeMeters([m,...extra],[...values.map(([month,units])=>({meterId:1,month,units})),...(extra.length?[]:[])]).at(-1);
 test('detects sudden drop',()=>expect(run([['2025-01',100],['2025-02',50]]).flags).toContain('SUDDEN_DROP'));

@@ -3,11 +3,11 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "dev": "node scripts/dev.js",
-    "dev:server": "node backend/server/index.js",
+    "dev": "node Script/dev.js",
+    "dev:server": "node Backend/index.js",
     "dev:client": "vite --config frontend/vite.config.js --host 127.0.0.1",
-    "start": "node backend/server/index.js",
-    "seed": "node backend/server/db/seed.js",
+    "start": "node Backend/index.js",
+    "seed": "node Backend/Database/seed.js",
     "test": "jest --runInBand",
     "build": "vite --config frontend/vite.config.js build",
     "preview": "vite --config frontend/vite.config.js preview --host 127.0.0.1"
@@ -15,7 +15,6 @@
    "dependencies": {
     "axios": "^1.7.9",
     "bcrypt": "^5.1.1",
-    "better-sqlite3": "^11.7.0",
     "cors": "^2.8.5",
     "csv-parse": "^5.6.0",
     "dotenv": "^16.4.7",
@@ -23,6 +22,7 @@
     "jsonwebtoken": "^9.0.2",
     "lucide-react": "^1.72.0",
     "multer": "^1.4.5-lts.1",
+    "pg": "^8.13.1",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-hot-toast": "^2.5.2",

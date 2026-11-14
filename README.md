@@ -8,18 +8,18 @@ A local, demo-ready college major project for manually entered monthly electrici
 - Meter registry and monthly reading entry, validation, and bulk CSV import with per-row feedback.
 - Explainable risk engine, monthly dashboard, risk filters, meter history, and investigation notes.
 - Risk report CSV export and downloadable import template.
-- SQLite database created automatically on first run; demo seed creates 30 meters and 12 months of sample data.
+- PostgreSQL database initialized automatically on first run; demo seed creates 30 meters and 12 months of sample data.
 
 ## Tech stack
 
-React + Vite, React Router, Axios, Recharts, Express, SQLite (`better-sqlite3`), JWT, bcrypt, Multer, csv-parse, Jest.
+React + Vite, React Router, Axios, Recharts, Express, PostgreSQL (`pg`), JWT, bcrypt, Multer, csv-parse, Jest.
 
 ## Project structure
 
 ```text
 frontend/       React + Vite application
-backend/server/ Express API, database, risk engine, and tests
-scripts/        Local development helpers
+Backend/        Express API, PostgreSQL database models, risk engine, and tests
+Script/         Local development helpers
 ```
 
 ## Architecture
@@ -29,7 +29,7 @@ flowchart LR
   Browser[React dashboard] -->|Axios / JSON + JWT| API[Express REST API]
   API --> Auth[Auth middleware]
   API --> Engine[Rule based risk engine]
-  API --> DB[(SQLite database)]
+  API --> DB[(PostgreSQL database)]
   Seed[Demo seed script] --> DB
 ```
 
@@ -43,20 +43,20 @@ erDiagram
   USERS { int id string email string role }
   METERS { int id string meter_id string consumer_name string connection_type float sanctioned_load_kw }
   READINGS { int id int meter_id string month float units_consumed }
-  ANALYSIS { int id int meter_id string month int risk_score string risk_level string flags }
+  ANALYSIS { int id int meter_id string month int risk_score string risk_level jsonb flags }
 ```
 
 ## Run locally
 
-Requires Node.js 18 or newer.
+Requires Node.js 18 or newer and PostgreSQL.
 
-1. Copy `.env.example` to `.env` if you want to customize the port or JWT secret. Defaults work locally.
+1. Copy `.env.example` to `.env` and set `DATABASE_URL` (e.g. `postgresql://postgres:postgres@localhost:5432/volttrack_lite`).
 2. From the repository root, run `npm install`.
 3. Run `npm run seed` once to create demo accounts and sample data.
 4. Run `npm run dev` and open [http://localhost:5173](http://localhost:5173).
 5. Log in as `admin@volttrack.com` / `admin123` (or `demo@volttrack.com` / `demo123`).
 
-SQLite is stored at `backend/server/db/volttrack.sqlite` by default. Set `DB_PATH` to move it. The standalone API defaults to port 3000. The combined `npm run dev` launcher uses port 5000 when available and falls back to 5001 when it is occupied, then connects the Vite client to the selected API port. `npm test` runs the risk engine tests.
+The standalone API defaults to port 3000. The combined `npm run dev` launcher uses port 5000 when available and falls back to 5001 when it is occupied, then connects the Vite client to the selected API port. `npm test` runs the risk engine tests.
 
 ## Risk scoring
 
