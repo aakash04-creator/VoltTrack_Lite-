@@ -2,10 +2,11 @@ const { Pool } = require('pg');
 require('dotenv').config();
 
 const connectionString = process.env.DATABASE_URL || 'postgresql://postgres:postgres@localhost:5432/volttrack_lite';
+const isRemoteDb = process.env.DATABASE_SSL === 'true' || connectionString.includes('neon.tech') || connectionString.includes('sslmode=require');
 
 const pool = new Pool({
   connectionString,
-  ssl: process.env.DATABASE_SSL === 'true' ? { rejectUnauthorized: false } : false,
+  ssl: isRemoteDb ? { rejectUnauthorized: false } : false,
 });
 
 const query = (text, params) => pool.query(text, params);
