@@ -4,7 +4,10 @@ const bcrypt = require('bcrypt');
 
 (async () => {
   try {
+    console.log('Connecting to database and creating tables...');
     await initDb();
+    console.log('Tables ready. Inserting users and records...');
+
     const adminHash = await bcrypt.hash('admin123', 10);
     const userHash = await bcrypt.hash('demo123', 10);
 
@@ -29,28 +32,45 @@ const bcrypt = require('bcrypt');
     try {
       await client.query('BEGIN');
 
+      const meterValues = [];
+      const meterParams = [];
+      let mIdx = 1;
+
       for (let i = 1; i <= 30; i++) {
         const type = i <= 20 ? 'Residential' : i <= 26 ? 'Commercial' : 'Industrial';
         const meterId = `VT-${String(i).padStart(4, '0')}`;
         const load = type === 'Residential' ? 5 : type === 'Commercial' ? 20 : 55;
 
-        await client.query(
-          `INSERT INTO meters (meter_id, consumer_name, address, connection_type, sanctioned_load_kw, status, created_by)
-           VALUES ($1, $2, $3, $4, $5, $6, $7)
-           ON CONFLICT (meter_id) DO NOTHING`,
-          [
-            meterId,
-            `Consumer ${String(i).padStart(2, '0')}`,
-            `${10 + i} Maple Street, Ward ${(i % 6) + 1}`,
-            type,
-            load,
-            'Active',
-            adminId,
-          ]
+        meterValues.push(`($${mIdx++}, $${mIdx++}, $${mIdx++}, $${mIdx++}, $${mIdx++}, $${mIdx++}, $${mIdx++})`);
+        meterParams.push(
+          meterId,
+          `Consumer ${String(i).padStart(2, '0')}`,
+          `${10 + i} Maple Street, Ward ${(i % 6) + 1}`,
+          type,
+          load,
+          'Active',
+          adminId
         );
+      }
 
-        const meterRes = await client.query('SELECT id FROM meters WHERE meter_id = $1', [meterId]);
-        const id = meterRes.rows[0].id;
+      await client.query(
+        `INSERT INTO meters (meter_id, consumer_name, address, connection_type, sanctioned_load_kw, status, created_by)
+         VALUES ${meterValues.join(', ')}
+         ON CONFLICT (meter_id) DO NOTHING`,
+        meterParams
+      );
+
+      const allMeters = (await client.query('SELECT id, meter_id FROM meters ORDER BY meter_id')).rows;
+      const meterMap = Object.fromEntries(allMeters.map((m) => [m.meter_id, m.id]));
+
+      const readingValues = [];
+      const readingParams = [];
+      let rIdx = 1;
+
+      for (let i = 1; i <= 30; i++) {
+        const type = i <= 20 ? 'Residential' : i <= 26 ? 'Commercial' : 'Industrial';
+        const meterCode = `VT-${String(i).padStart(4, '0')}`;
+        const dbId = meterMap[meterCode];
 
         for (let j = 0; j < 12; j++) {
           const d = new Date(2025, j, 1);
@@ -69,14 +89,17 @@ const bcrypt = require('bcrypt');
 
           const remarks = i === 3 && j === 8 ? 'Demo sudden drop' : i === 7 && j === 10 ? 'Demo zero reading' : '';
 
-          await client.query(
-            `INSERT INTO readings (meter_id, month, units_consumed, reading_date, remarks)
-             VALUES ($1, $2, $3, $4, $5)
-             ON CONFLICT (meter_id, month) DO NOTHING`,
-            [id, month, Math.round(units), `${month}-28`, remarks]
-          );
+          readingValues.push(`($${rIdx++}, $${rIdx++}, $${rIdx++}, $${rIdx++}, $${rIdx++})`);
+          readingParams.push(dbId, month, Math.round(units), `${month}-28`, remarks);
         }
       }
+
+      await client.query(
+        `INSERT INTO readings (meter_id, month, units_consumed, reading_date, remarks)
+         VALUES ${readingValues.join(', ')}
+         ON CONFLICT (meter_id, month) DO NOTHING`,
+        readingParams
+      );
 
       await client.query('COMMIT');
     } catch (txError) {
@@ -86,7 +109,7 @@ const bcrypt = require('bcrypt');
       client.release();
     }
 
-    console.log('Seeded admin, demo user, 30 meters and 360 monthly readings into PostgreSQL.');
+    console.log('Seeded admin, demo user, 30 meters and 360 monthly readings into PostgreSQL successfully!');
     await pool.end();
   } catch (e) {
     console.error('Seeding failed:', e);
