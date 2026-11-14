@@ -66,47 +66,46 @@ async function runAnalysis(ms) {
   const result = analyzeMeters(ms, data, conf);
 
   if (result.length) {
-    const client = await db.pool.connect();
-    try {
-      await client.query('BEGIN');
-      for (const r of result) {
-        await client.query(
-          `INSERT INTO analysis (
-            meter_id, month, units_consumed, change_percent, rolling_avg,
-            deviation_percent, risk_score, risk_level, flags, reasons
-          )
-          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
-          ON CONFLICT (meter_id, month) DO UPDATE SET
-            units_consumed = EXCLUDED.units_consumed,
-            change_percent = EXCLUDED.change_percent,
-            rolling_avg = EXCLUDED.rolling_avg,
-            deviation_percent = EXCLUDED.deviation_percent,
-            risk_score = EXCLUDED.risk_score,
-            risk_level = EXCLUDED.risk_level,
-            flags = EXCLUDED.flags,
-            reasons = EXCLUDED.reasons,
-            analyzed_at = CURRENT_TIMESTAMP`,
-          [
-            r.meterId,
-            r.month,
-            r.units,
-            r.changePercent,
-            r.rollingAvg,
-            r.deviationPercent,
-            r.score,
-            r.level,
-            JSON.stringify(r.flags),
-            JSON.stringify(r.reasons),
-          ]
-        );
-      }
-      await client.query('COMMIT');
-    } catch (err) {
-      await client.query('ROLLBACK');
-      throw err;
-    } finally {
-      client.release();
+    const valuePlaceholders = [];
+    const params = [];
+    let pIdx = 1;
+
+    for (const r of result) {
+      valuePlaceholders.push(
+        `($${pIdx++}, $${pIdx++}, $${pIdx++}, $${pIdx++}, $${pIdx++}, $${pIdx++}, $${pIdx++}, $${pIdx++}, $${pIdx++}, $${pIdx++})`
+      );
+      params.push(
+        r.meterId,
+        r.month,
+        r.units,
+        r.changePercent,
+        r.rollingAvg,
+        r.deviationPercent,
+        r.score,
+        r.level,
+        JSON.stringify(r.flags),
+        JSON.stringify(r.reasons)
+      );
     }
+
+    const upsertSql = `
+      INSERT INTO analysis (
+        meter_id, month, units_consumed, change_percent, rolling_avg,
+        deviation_percent, risk_score, risk_level, flags, reasons
+      )
+      VALUES ${valuePlaceholders.join(', ')}
+      ON CONFLICT (meter_id, month) DO UPDATE SET
+        units_consumed = EXCLUDED.units_consumed,
+        change_percent = EXCLUDED.change_percent,
+        rolling_avg = EXCLUDED.rolling_avg,
+        deviation_percent = EXCLUDED.deviation_percent,
+        risk_score = EXCLUDED.risk_score,
+        risk_level = EXCLUDED.risk_level,
+        flags = EXCLUDED.flags,
+        reasons = EXCLUDED.reasons,
+        analyzed_at = CURRENT_TIMESTAMP
+    `;
+    await db.query(upsertSql, params);
   }
 
   return result;
