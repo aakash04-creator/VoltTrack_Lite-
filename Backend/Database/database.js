@@ -1,8 +1,16 @@
 const { Pool } = require('pg');
 require('dotenv').config();
 
-const connectionString = process.env.DATABASE_URL || 'postgresql://postgres:postgres@localhost:5432/volttrack_lite';
-const isRemoteDb = process.env.DATABASE_SSL === 'true' || connectionString.includes('neon.tech') || connectionString.includes('sslmode=require');
+const rawConnectionString = process.env.DATABASE_URL || 'postgresql://postgres:postgres@localhost:5432/volttrack_lite';
+// Strip channel_binding which is unsupported by node-postgres (pg) and causes connection hangs on Neon
+const connectionString = rawConnectionString
+  .replace(/([?&])channel_binding=[^&]+(&|$)/g, '$1')
+  .replace(/[?&]$/, '');
+
+const isRemoteDb =
+  process.env.DATABASE_SSL === 'true' ||
+  connectionString.includes('neon.tech') ||
+  connectionString.includes('sslmode=require');
 
 const pool = new Pool({
   connectionString,
