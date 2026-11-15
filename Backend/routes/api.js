@@ -379,7 +379,6 @@ router.post('/analysis/run', async (req, res, next) => {
 router.get('/analysis', async (req, res, next) => {
   try {
     const ms = await getMeters(req);
-    await runAnalysis(ms);
     let sql = `SELECT a.*, m.meter_id AS "meterCode", m.consumer_name AS "consumerName",
                       m.connection_type AS "connectionType"
                FROM analysis a
@@ -401,7 +400,15 @@ router.get('/analysis', async (req, res, next) => {
       }
     }
     sql += ' ORDER BY a.month DESC, a.risk_score DESC';
-    const { rows } = await db.query(sql, params);
+    let { rows } = await db.query(sql, params);
+
+    // If no analysis exists yet, run it once
+    if (!rows.length && !req.query.month && !req.query.level && !req.query.connectionType) {
+      await runAnalysis(ms);
+      const refetch = await db.query(sql, params);
+      rows = refetch.rows;
+    }
+
     const out = rows.map((a) => ({
       ...a,
       meterId: a.meter_id,
@@ -420,7 +427,41 @@ router.get('/analysis', async (req, res, next) => {
 router.get('/dashboard/summary', async (req, res, next) => {
   try {
     const ms = await getMeters(req);
-    const data = await runAnalysis(ms);
+    const meterIds = ms.map((m) => m.id);
+
+    let { rows: analysisRows } = await db.query(
+      `SELECT a.*, m.meter_id AS "meterCode", m.consumer_name AS "consumerName", m.connection_type AS "connectionType"
+       FROM analysis a
+       JOIN meters m ON m.id = a.meter_id
+       WHERE a.meter_id = ANY($1::int[])
+       ORDER BY a.month DESC, a.risk_score DESC`,
+      [meterIds]
+    );
+
+    // If no analysis records exist yet, generate them once
+    if (!analysisRows.length && ms.length) {
+      await runAnalysis(ms);
+      const refetched = await db.query(
+        `SELECT a.*, m.meter_id AS "meterCode", m.consumer_name AS "consumerName", m.connection_type AS "connectionType"
+         FROM analysis a
+         JOIN meters m ON m.id = a.meter_id
+         WHERE a.meter_id = ANY($1::int[])
+         ORDER BY a.month DESC, a.risk_score DESC`,
+        [meterIds]
+      );
+      analysisRows = refetched.rows;
+    }
+
+    const data = analysisRows.map((a) => ({
+      ...a,
+      meterId: a.meter_id,
+      score: a.risk_score,
+      level: a.risk_level,
+      units: Number(a.units_consumed),
+      flags: typeof a.flags === 'string' ? JSON.parse(a.flags) : a.flags,
+      reasons: typeof a.reasons === 'string' ? JSON.parse(a.reasons) : a.reasons,
+    }));
+
     const month = req.query.month || (data.map((x) => x.month).sort().pop() || new Date().toISOString().slice(0, 7));
     const selected = data.filter((x) => x.month === month);
 
