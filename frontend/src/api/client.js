@@ -1,6 +1,7 @@
 import axios from 'axios';
 
-let rawUrl = (import.meta.env.VITE_API_URL || 'http://localhost:5000/api').trim().replace(/\/+$/, '');
+const savedApi = typeof localStorage !== 'undefined' ? localStorage.getItem('volttrack_api_url') : null;
+let rawUrl = (savedApi || import.meta.env.VITE_API_URL || 'https://volttrack-lite.onrender.com/api').trim().replace(/\/+$/, '');
 if (!rawUrl.endsWith('/api')) {
   rawUrl += '/api';
 }

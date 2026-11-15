@@ -5,6 +5,7 @@ const react = require('@vitejs/plugin-react');
 module.exports = defineConfig({
   plugins: [react()],
   root: __dirname,
+  base: './',
   build: {
     outDir: path.resolve(__dirname, '../dist'),
     emptyOutDir: true,

@@ -6,3 +6,5 @@ frontend/dist
 Backend/Database/*.sqlite*
 .DS_Store
 coverage
+release
+
