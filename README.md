@@ -8,7 +8,7 @@ A local, demo-ready college major project for manually entered monthly electrici
 - Meter registry and monthly reading entry, validation, and bulk CSV import with per-row feedback.
 - Explainable risk engine, monthly dashboard, risk filters, meter history, and investigation notes.
 - Risk report CSV export and downloadable import template.
-- SQLite database created automatically on first run; demo seed creates 30 meters and 12 months of sample data.
+- SQLite database created from the tracked schema automatically on first run; demo seed creates 30 meters and 12 months of sample data.
 
 ## Tech stack
 
@@ -52,11 +52,12 @@ Requires Node.js 18 or newer.
 
 1. Copy `.env.example` to `.env` if you want to customize the port or JWT secret. Defaults work locally.
 2. From the repository root, run `npm install`.
-3. Run `npm run seed` once to create demo accounts and sample data.
-4. Run `npm run dev` and open [http://localhost:5173](http://localhost:5173).
-5. Log in as `admin@volttrack.com` / `admin123` (or `demo@volttrack.com` / `demo123`).
+3. Run `npm run db:init` to create the SQLite database and tables.
+4. Run `npm run seed` once to create demo accounts and sample data.
+5. Run `npm run dev` and open [http://localhost:5173](http://localhost:5173).
+6. Log in as `admin@volttrack.com` / `admin123` (or `demo@volttrack.com` / `demo123`).
 
-SQLite is stored at `backend/server/db/volttrack.sqlite` by default. Set `DB_PATH` to move it. The standalone API defaults to port 3000. The combined `npm run dev` launcher uses port 5000 when available and falls back to 5001 when it is occupied, then connects the Vite client to the selected API port. `npm test` runs the risk engine tests.
+The versioned database schema is `backend/server/db/schema.sql`. SQLite data is stored at `backend/server/db/volttrack.sqlite` by default and is excluded from Git; set `DB_PATH` to choose a different file. `npm run db:init` is safe to rerun and creates missing tables without deleting data. The standalone API defaults to port 3000. The combined `npm run dev` launcher uses port 5000 when available and falls back to 5001 when it is occupied, then connects the Vite client to the selected API port. `npm test` runs the risk engine tests.
 
 ## Risk scoring
 
