@@ -1,0 +1,10 @@
+const Database = require('better-sqlite3');
+const fs = require('fs');
+const path = require('path');
+require('dotenv').config();
+const file = process.env.DB_PATH || path.join(__dirname, 'volttrack.sqlite');
+fs.mkdirSync(path.dirname(path.resolve(file)), { recursive: true });
+const db = new Database(file);
+db.pragma('foreign_keys = ON');
+db.exec(fs.readFileSync(path.join(__dirname, 'schema.sql'), 'utf8'));
+module.exports=db;

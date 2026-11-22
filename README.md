@@ -8,18 +8,19 @@ A local, demo-ready college major project for manually entered monthly electrici
 - Meter registry and monthly reading entry, validation, and bulk CSV import with per-row feedback.
 - Explainable risk engine, monthly dashboard, risk filters, meter history, and investigation notes.
 - Risk report CSV export and downloadable import template.
-- PostgreSQL database initialized automatically on first run; demo seed creates 30 meters and 12 months of sample data.
+- Selectable PostgreSQL and SQLite backends; both initialize their schemas automatically and support demo data.
 
 ## Tech stack
 
-React + Vite, React Router, Axios, Recharts, Express, PostgreSQL (`pg`), JWT, bcrypt, Multer, csv-parse, Jest.
+React + Vite, React Router, Axios, Recharts, Express, PostgreSQL (`pg`), SQLite (`better-sqlite3`), JWT, bcrypt, Multer, csv-parse, Jest.
 
 ## Project structure
 
 ```text
-frontend/       React + Vite application
-Backend/        Express API, PostgreSQL database models, risk engine, and tests
-Script/         Local development helpers
+frontend/             React + Vite application
+backend/postgres/     Express API backed by PostgreSQL (default)
+backend/sqlite/       Express API backed by local SQLite
+scripts/              Local development helpers
 ```
 
 ## Architecture
@@ -29,7 +30,7 @@ flowchart LR
   Browser[React dashboard] -->|Axios / JSON + JWT| API[Express REST API]
   API --> Auth[Auth middleware]
   API --> Engine[Rule based risk engine]
-  API --> DB[(PostgreSQL database)]
+  API --> DB[(PostgreSQL or SQLite)]
   Seed[Demo seed script] --> DB
 ```
 
@@ -48,14 +49,17 @@ erDiagram
 
 ## Run locally
 
-Requires Node.js 18 or newer and PostgreSQL.
+Requires Node.js 18 or newer. PostgreSQL is required for the default backend; SQLite runs locally without a database service.
 
-1. Copy `.env.example` to `.env` and set `DATABASE_URL` (e.g. `postgresql://postgres:postgres@localhost:5432/volttrack_lite`).
+1. Copy `.env.example` to `.env`. For PostgreSQL, set `DATABASE_URL` (e.g. `postgresql://postgres:postgres@localhost:5432/volttrack_lite`).
 2. From the repository root, run `npm install`.
-3. Run `npm run seed` once to create demo accounts and sample data.
-4. Log in as `admin@volttrack.com` / `admin123` (or `demo@volttrack.com` / `demo123`).
+3. For PostgreSQL, run `npm run seed`; for SQLite, run `npm run db:init:sqlite` followed by `npm run seed:sqlite`.
+4. Start the selected backend and frontend with `npm run dev` (PostgreSQL) or `npm run dev:sqlite` (SQLite), then open [http://localhost:5173](http://localhost:5173).
+5. Log in as `admin@volttrack.com` / `admin123` (or `demo@volttrack.com` / `demo123`).
 
-The standalone API defaults to port 3000. The combined `npm run dev` launcher uses port 5000 when available and falls back to 5001 when it is occupied, then connects the Vite client to the selected API port. `npm test` runs the risk engine tests.
+The standalone APIs default to port 3000. The combined launchers use port 5000 when available and fall back to 5001 when it is occupied, then connect the Vite client to the selected API port. PostgreSQL is the default for `npm run dev`; pass `sqlite` through `npm run dev:sqlite` to run the local database. `npm test` runs the risk engine tests.
+
+PostgreSQL implementation and seed script: `backend/postgres/`. SQLite schema, database initialization, and seed script: `backend/sqlite/db/`. The SQLite file defaults to `backend/sqlite/db/volttrack.sqlite` and is excluded from Git; set `DB_PATH` to relocate it. The tracked SQLite schema is safe to apply repeatedly with `npm run db:init:sqlite`.
 
 ## Risk scoring
 

@@ -10,6 +10,8 @@ function portIsAvailable(port){
 }
 
 async function start(){
+ const backend=process.argv[2]==='sqlite'?'sqlite':'postgres';
+ const apiEntry=backend==='sqlite'?'backend/sqlite/index.js':'backend/postgres/index.js';
  const requested=Number(process.env.PORT)||5000;
  const port=await portIsAvailable(requested)?requested:await portIsAvailable(requested+1)?requested+1:null;
  if(!port){throw new Error(`Ports ${requested} and ${requested+1} are unavailable`)}
@@ -18,7 +20,7 @@ async function start(){
  process.env.VITE_API_URL=`http://localhost:${port}/api`;
  if(port!==requested)console.warn(`Port ${requested} is busy; using ${port} for the VoltTrack API.`);
  const {result}=concurrently([
-  {command:'node Backend/index.js',name:'API',prefixColor:'blue'},
+  {command:`node ${apiEntry}`,name:`API (${backend})`,prefixColor:'blue'},
   {command:'vite --config frontend/vite.config.js --host 127.0.0.1',name:'Client',prefixColor:'green'},
  ],{prefix:'name',killOthersOn:['failure'],restartTries:0});
  await result;

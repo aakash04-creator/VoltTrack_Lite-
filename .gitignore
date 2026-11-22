@@ -3,6 +3,6 @@ node_modules
 dist
 frontend/dist
 *.sqlite*
-Backend/Database/*.sqlite*
+backend/sqlite/db/*.sqlite*
 .DS_Store
 coverage
